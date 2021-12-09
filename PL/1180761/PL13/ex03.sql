@@ -1,0 +1,13 @@
+SELECT NR_VENDA, TO_NUMBER(TO_CHAR(data_hora, 'SSSSS'))
+FROM vendas;
+
+ALTER TRIGGER trgVendasImpedirAlteracoesForaExpediente DISABLE;
+
+UPDATE vendas
+SET DATA_HORA = TO_DATE(CONCAT(TO_CHAR(DATA_HORA, 'DD-MM-YYYY'),CONCAT(' ', '68399')),'DD-MM-YYYY SSSSS')
+WHERE TO_NUMBER(TO_CHAR(data_hora, 'SSSSS')) NOT BETWEEN (60*60*9) AND (60*60*19);
+
+SELECT NR_VENDA, TO_NUMBER(TO_CHAR(data_hora, 'SSSSS'))
+FROM vendas;
+
+ALTER TRIGGER trgVendasImpedirAlteracoesForaExpediente ENABLE;

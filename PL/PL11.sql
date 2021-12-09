@@ -1,0 +1,114 @@
+---PL11
+-
+---ex04
+-
+-CREATE FUNCTION funcMenorIdadeClientes return int
+-is 
+-    menorIdadeClientes int;
+-begin
+-    select MIN(trunc(floor(months_between(sysdate , data_nascimento) /12))) into menorIdadeClientes
+-    FROM Clientes;
+-    if data_nascimento is NULL then
+-    return null;
+-    else
+-    return menorIdadeClientes;
+-    end if;
+-end;
+-
+-
+---ex05
+-CREATE OR REPLACE FUNCTION funcTemLivrosEditora(p_id_editora EDITORAS.id_editora%type) RETURN boolean AS
+-    l_n_livros int;
+-    l_editora_existe char(1);
+-
+-    BEGIN
+-        SELECT 'y' into l_editora_existe
+-        FROM EDITORAS
+-        WHERE p_id_editora = ID_EDITORA;
+-
+-        SELECT SUM(stock) INTO l_n_livros
+-        FROM EDICOES_LIVROS
+-        WHERE p_id_editora = id_editora;
+-
+-        IF l_n_livros = 0 THEN
+-            RETURN false;
+-        end if;
+-
+-        RETURN true;
+-
+-    EXCEPTION
+-        WHEN OTHERS THEN
+-            RETURN null;
+-    end;
+-SET SERVEROUTPUT ON
+-BEGIN
+-    if (funcTemLivrosEditora(1500) = false) then
+-        DBMS_OUTPUT.PUT_LINE('Editora n?o tem livros');
+-    elsif (funcTemLivrosEditora(1500) = true) then
+-        DBMS_OUTPUT.PUT_LINE('Editora tem livros');
+-    else
+-        DBMS_OUTPUT.PUT_LINE('Editora inv?lida');
+-    end if;
+-end;
+-
+---ex06
+-CREATE OR REPLACE FUNCTION funcClienteInfo(p_nif_cliente CLIENTES.nif_cliente%type) RETURN CLIENTES%rowtype AS
+-    l_info_clientes CLIENTES%rowtype;
+-
+-    BEGIN
+-        SELECT * INTO l_info_clientes
+-        FROM CLIENTES
+-        WHERE NIF_CLIENTE = p_nif_cliente;
+-
+-        RETURN l_info_clientes;
+-
+-    EXCEPTION
+-        WHEN OTHERS THEN
+-            RETURN null;
+-    end;
+-SET SERVEROUTPUT ON
+-BEGIN
+-    DBMS_OUTPUT.PUT_LINE('CLIENTE: '||funcClienteInfo(900800500).NOME);
+-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(funcClienteInfo(900800500).NIF_CLIENTE));
+-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(funcClienteInfo(900800500).DATA_NASCIMENTO, 'DD-MM-YYYY'));
+-    DBMS_OUTPUT.PUT_LINE(funcClienteInfo(900800500).MORADA);
+-    DBMS_OUTPUT.PUT_LINE(funcClienteInfo(900800500).COD_POSTAL);
+-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(funcClienteInfo(900800500).NR_TELEMOVEL));
+-end;
+-
+---ex07
+-CREATE OR REPLACE FUNCTION funcStockAnoEditora(p_id_editora EDITORAS.id_editora%type, ano integer default EXTRACT(year from(SYSTIMESTAMP))) RETURN integer AS
+-    l_n_livros_stock integer;
+-    ex_ano_invalido EXCEPTION;
+-    l_editora_existe char(1);
+-
+-    BEGIN
+-        if (ano > EXTRACT(year from(SYSTIMESTAMP))) then
+-            raise ex_ano_invalido;
+-        end if;
+-
+-        SELECT 'y' into l_editora_existe
+-        FROM EDITORAS
+-        WHERE p_id_editora = ID_EDITORA;
+-
+-        SELECT SUM(STOCK) INTO l_n_livros_stock
+-            FROM EDICOES_LIVROS
+-            WHERE p_id_editora = ID_EDITORA
+-                AND ANO_EDICAO = ano;
+-        return l_n_livros_stock;
+-
+-    EXCEPTION
+-        WHEN ex_ano_invalido THEN
+-            RETURN null;
+-        WHEN NO_DATA_FOUND THEN
+-            RETURN null;
+-    end;
+-
+-SET SERVEROUTPUT ON
+-BEGIN
+-    if (funcStockAnoEditora(1500) IS null) then
+-        DBMS_OUTPUT.PUT_LINE('Editora e/ou ano inv?lidos');
+-    else
+-        DBMS_OUTPUT.PUT_LINE('A editora tem ' || TO_CHAR(funcStockAnoEditora(1500))|| ' livros em stock no ano atual.');
+-    end if;
+-end;
